@@ -4,6 +4,7 @@ import plotly.express as px
 from datetime import datetime
 import numpy as np
 import os
+import sqlite3
 
 try:
     # Configuración de la página con manejo de errores
@@ -16,28 +17,50 @@ try:
 except Exception as e:
     st.error(f"Error en la configuración de la página: {str(e)}")
 
-# Función para guardar preguntas sin respuesta
-def save_unanswered_question(question):
+def setup_database():
+    """Crear la base de datos y la tabla si no existen"""
     try:
-        # Asegurar que el directorio data existe
+        # Asegurar que existe el directorio data
         os.makedirs('data', exist_ok=True)
         
-        filename = 'data/preguntas.csv'
-        current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        conn = sqlite3.connect('data/preguntas.db')
+        c = conn.cursor()
         
-        # Crear el CSV si no existe
-        if not os.path.exists(filename):
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write('fecha,pregunta\n')
+        # Crear tabla de preguntas
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS preguntas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                pregunta TEXT NOT NULL
+            )
+        ''')
         
-        # Agregar la nueva pregunta
-        with open(filename, 'a', encoding='utf-8') as f:
-            # Escapar comillas en la pregunta para evitar problemas con el CSV
-            safe_question = question.replace('"', '""')
-            f.write(f'"{current_date}","{safe_question}"\n')
-            
-        st.toast(f'Pregunta guardada en {filename}', icon='✍️')
+        conn.commit()
+        conn.close()
         return True
+    except Exception as e:
+        st.error(f"Error al configurar la base de datos: {str(e)}")
+        return False
+
+def save_unanswered_question(question):
+    """Guardar pregunta sin respuesta en la base de datos"""
+    try:
+        # Asegurar que existe la base de datos
+        setup_database()
+        
+        # Guardar la pregunta
+        conn = sqlite3.connect('data/preguntas.db')
+        c = conn.cursor()
+        
+        c.execute('INSERT INTO preguntas (fecha, pregunta) VALUES (?, ?)',
+                 (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), question))
+        
+        conn.commit()
+        conn.close()
+        
+        st.toast("Pregunta guardada en la base de datos", icon='✍️')
+        return True
+        
     except Exception as e:
         st.error(f"Error al guardar la pregunta: {str(e)}")
         return False
