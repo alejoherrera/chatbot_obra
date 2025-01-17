@@ -145,7 +145,22 @@ try:
         # Palabras clave para diferentes tipos de análisis
         prompt_lower = prompt.lower()
         
-        if "promedio" in prompt_lower or "media" in prompt_lower:
+        if "promedio por imagen" in prompt_lower:
+            # Agrupar por nombre de imagen primero
+            image_stats = df.groupby(['nombre_imagen', 'tipo_objeto']).size().reset_index(name='count')
+            avg_by_image = image_stats.groupby('tipo_objeto')['count'].mean().round(2)
+            
+            response = "Promedio de detecciones por imagen:\n\n"
+            for obj_type, avg in avg_by_image.items():
+                response += f"- {obj_type}: {avg:.2f}\n"
+            
+            # Crear gráfico de barras
+            fig = px.bar(avg_by_image, 
+                        title='Promedio de Detecciones por Imagen',
+                        labels={'index': 'Tipo de Objeto', 'value': 'Promedio por Imagen'},
+                        color=avg_by_image.index)
+        
+        elif "promedio" in prompt_lower or "media" in prompt_lower:
             if "día" in prompt_lower or "diario" in prompt_lower:
                 daily_avg = df.groupby(['date', 'tipo_objeto']).size().reset_index(name='count')
                 daily_avg = daily_avg.groupby(['tipo_objeto'])['count'].mean().round(2)
@@ -195,12 +210,24 @@ try:
                          title='Detecciones por Hora del Día',
                          labels={'hour': 'Hora', 'count': 'Número de Detecciones', 'tipo_objeto': 'Tipo'})
 
+        elif "total" in prompt_lower or "detecciones" in prompt_lower:
+            total_by_type = df['tipo_objeto'].value_counts()
+            response = "Total de detecciones por tipo:\n\n"
+            for obj_type, count in total_by_type.items():
+                response += f"- {obj_type}: {count:,}\n"
+            
+            fig = px.bar(x=total_by_type.index, y=total_by_type.values,
+                        title='Total de Detecciones por Tipo',
+                        labels={'x': 'Tipo de Objeto', 'y': 'Número de Detecciones'})
+
         else:
             response = """Puedo ayudarte con información sobre:
+- Promedios por imagen
 - Promedios diarios de detecciones
 - Máximos de detecciones por tipo
 - Distribución de detecciones
 - Patrones horarios
+- Total de detecciones
             
 ¿Qué te gustaría saber?"""
 
