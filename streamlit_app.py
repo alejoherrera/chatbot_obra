@@ -22,45 +22,91 @@ Puedes hacer preguntas sobre:
 - Estadísticas específicas
 """)
 
+# Agregar opción de carga de archivo en el sidebar
+st.sidebar.markdown("### Cargar Datos")
+uploaded_file = st.sidebar.file_uploader("Cargar archivo CSV", type=['csv'])
+
 # Función para procesar el nombre del archivo y obtener la fecha y hora
 def extract_datetime(filename):
-    # Formato esperado: YYYYMMDD-HHMMSS.jpg
-    date_part = filename.split('-')[0]
-    time_part = filename.split('-')[1].split('.')[0]
-    
-    year = date_part[:4]
-    month = date_part[4:6]
-    day = date_part[6:8]
-    
-    hour = time_part[:2]
-    minute = time_part[2:4]
-    second = time_part[4:6]
-    
-    return datetime(int(year), int(month), int(day), 
-                   int(hour), int(minute), int(second))
+    try:
+        # Formato esperado: YYYYMMDD-HHMMSS.jpg
+        date_part = filename.split('-')[0]
+        time_part = filename.split('-')[1].split('.')[0]
+        
+        year = date_part[:4]
+        month = date_part[4:6]
+        day = date_part[6:8]
+        
+        hour = time_part[:2]
+        minute = time_part[2:4]
+        second = time_part[4:6]
+        
+        return datetime(int(year), int(month), int(day), 
+                       int(hour), int(minute), int(second))
+    except Exception as e:
+        st.error(f"Error al procesar fecha del archivo {filename}: {str(e)}")
+        return None
 
 # Función para cargar y procesar datos
 @st.cache_data
-def load_data():
-    df = pd.read_csv('matriz_prototipo.csv', sep=';')
+def load_data(uploaded_file=None):
+    try:
+        if uploaded_file is not None:
+            df = pd.read_csv(uploaded_file, sep=';')
+            st.success('Archivo cargado correctamente desde la carga manual')
+        else:
+            # Intenta diferentes rutas posibles para el archivo
+            possible_paths = [
+                'matriz_prototipo.csv',
+                'data/matriz_prototipo.csv',
+                './matriz_prototipo.csv',
+                './data/matriz_prototipo.csv'
+            ]
+            
+            df = None
+            for path in possible_paths:
+                try:
+                    df = pd.read_csv(path, sep=';')
+                    st.success(f'Archivo cargado correctamente desde: {path}')
+                    break
+                except FileNotFoundError:
+                    continue
+            
+            if df is None:
+                raise FileNotFoundError(
+                    "No se pudo encontrar el archivo matriz_prototipo.csv. "
+                    "Por favor, sube el archivo manualmente usando el panel lateral."
+                )
+        
+        # Procesar fechas y horas
+        df['datetime'] = df['nombre_imagen'].apply(extract_datetime)
+        df['date'] = df['datetime'].dt.date
+        df['hour'] = df['datetime'].dt.hour
+        
+        # Mapear etiquetas a nombres descriptivos
+        df['tipo_objeto'] = df['etiqueta'].map({
+            2: 'Personas',
+            3: 'Tractores',
+            6: 'Aplanadoras'
+        })
+        
+        return df
     
-    # Extraer fecha y hora del nombre de la imagen
-    df['datetime'] = df['nombre_imagen'].apply(extract_datetime)
-    df['date'] = df['datetime'].dt.date
-    df['hour'] = df['datetime'].dt.hour
-    
-    # Mapear etiquetas a nombres descriptivos
-    df['tipo_objeto'] = df['etiqueta'].map({
-        2: 'Personas',
-        3: 'Tractores',
-        6: 'Aplanadoras'
-    })
-    
-    return df
+    except Exception as e:
+        st.error(f"Error al procesar los datos: {str(e)}")
+        return None
 
 # Cargar datos
 try:
-    df = load_data()
+    # Intentar cargar datos
+    if uploaded_file is not None:
+        df = load_data(uploaded_file)
+    else:
+        df = load_data()
+        
+    if df is None:
+        st.warning("Por favor, sube el archivo CSV usando el panel lateral para comenzar el análisis.")
+        st.stop()
     
     # Calcular algunas estadísticas útiles
     total_detections = len(df)
