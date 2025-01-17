@@ -19,7 +19,10 @@ except Exception as e:
 # Función para guardar preguntas sin respuesta
 def save_unanswered_question(question):
     try:
-        filename = 'preguntas_sin_contestar.csv'
+        # Asegurar que el directorio data existe
+        os.makedirs('data', exist_ok=True)
+        
+        filename = 'data/preguntas.csv'
         current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         # Crear el CSV si no existe
@@ -29,8 +32,11 @@ def save_unanswered_question(question):
         
         # Agregar la nueva pregunta
         with open(filename, 'a', encoding='utf-8') as f:
-            f.write(f'"{current_date}","{question}"\n')
+            # Escapar comillas en la pregunta para evitar problemas con el CSV
+            safe_question = question.replace('"', '""')
+            f.write(f'"{current_date}","{safe_question}"\n')
             
+        st.toast(f'Pregunta guardada en {filename}', icon='✍️')
         return True
     except Exception as e:
         st.error(f"Error al guardar la pregunta: {str(e)}")
