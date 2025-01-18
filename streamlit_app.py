@@ -18,18 +18,6 @@ st.set_page_config(
 
 # Función para guardar en GitHub
 
-import streamlit as st
-import pandas as pd
-import base64
-import json
-import requests
-
-import streamlit as st
-import pandas as pd
-import base64
-import json
-import requests
-from datetime import datetime
 
 def save_question_to_github(question):
     try:
