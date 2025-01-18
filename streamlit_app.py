@@ -7,6 +7,9 @@ import os
 import base64
 import json
 import requests
+import streamlit as st
+import requests
+import base64
 
 # Configuración de la página
 st.set_page_config(
@@ -18,16 +21,23 @@ st.set_page_config(
 
 # Función para guardar en GitHub
 
+# Título y descripción
+st.title("💬 Chat Proyecto Taras-La Lima")
+st.markdown("""
+Este chat te permite analizar los datos de detección de objetos del proyecto Intersección vial Taras-La Lima.
+Puedes hacer preguntas sobre:
+- Detecciones de personas, tractores y aplanadoras
+- Tendencias diarias y horarias
+- Estadísticas específicas
+""")
+
+# Agregar opción de carga de archivo en el sidebar
+st.sidebar.markdown("### Cargar Datos")
+uploaded_file = st.sidebar.file_uploader("Cargar archivo CSV", type=['csv'])
 
 
 
-import requests
-import base64
-import pandas as pd
-import io
-from datetime import datetime
-import json
-import streamlit as st
+
 
 def save_question_to_github(question):
     try:
