@@ -154,20 +154,7 @@ def load_data(uploaded_file=None):
         st.error(f"Error al procesar los datos: {str(e)}")
         return None
 def main():
-    # Título y descripción
-    st.title("💬 Chat Proyecto Taras-La Lima")
-    st.markdown("""
-    Este chat te permite analizar los datos de detección de objetos del proyecto Intersección vial Taras-La Lima.
-    Puedes hacer preguntas sobre:
-    - Detecciones de personas, tractores y aplanadoras
-    - Tendencias diarias y horarias
-    - Estadísticas específicas
-    """)
-
-    # Agregar opción de carga de archivo en el sidebar
-    st.sidebar.markdown("### Cargar Datos")
-    uploaded_file = st.sidebar.file_uploader("Cargar archivo CSV", type=['csv'])
-
+   
     try:
         # Intentar cargar datos
         if uploaded_file is not None:
