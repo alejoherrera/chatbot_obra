@@ -55,7 +55,7 @@ def load_data():
         # Ruta del archivo predefinido
         url = "https://raw.githubusercontent.com/alejoherrera/chatbot_obra/main/data/matriz_prototipo.csv"
         df = pd.read_csv(url, sep=';')
-        st.success(f'Archivo cargado correctamente desde: {file_path}')
+        st.success(f'Archivo cargado correctamente ')
         
         # Procesar fechas y horas
         df['datetime'] = df['nombre_imagen'].apply(extract_datetime)
