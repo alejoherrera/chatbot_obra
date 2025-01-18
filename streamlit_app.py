@@ -30,11 +30,9 @@ Puedes hacer preguntas sobre:
 - Tendencias diarias y horarias
 - Estadísticas específicas
 Puedo generar algunos gráficos de interés y estoy aprendiendo a hacer más cosas.
+Algunas pregunta sugeridas, Qué tipos de equipo se detecto?, Cuándo hubo más vagonetas...puedes traerme un café?...ups perdón esa no
 """)
 
-# Agregar opción de carga de archivo en el sidebar
-st.sidebar.markdown("### Cargar Datos")
-uploaded_file = st.sidebar.file_uploader("Cargar archivo CSV", type=['csv'])
 
 
 
