@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
-import numpy as np
-import os
 import base64
 import json
 import requests
@@ -16,69 +14,48 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Función para guardar en GitHub
-def save_question_to_github(question):
+def update_question_file_in_github(df):
     try:
         # Configuración de GitHub
         github_token = st.secrets["github"]["token"]
         repo_name = "alejoherrera/chatbot_obra"
         file_path = "data/preguntas.csv"
-        
-        # Headers para la API de GitHub
+
         headers = {
             "Authorization": f"token {github_token}",
             "Accept": "application/vnd.github.v3+json"
         }
 
-        # URL de la API
+        # Obtener contenido actual del archivo desde GitHub
         url = f"https://api.github.com/repos/{repo_name}/contents/{file_path}"
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        file_data = response.json()
 
-        try:
-            # Intentar obtener el archivo existente
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            
-            # Decodificar el contenido existente
-            content = base64.b64decode(response.json()["content"]).decode("utf-8")
-            sha = response.json()["sha"]
-            
-            # Convertir el contenido a DataFrame
-            df = pd.read_csv(pd.StringIO(content))
-        except Exception as e:
-            # Si el archivo no existe, crear un DataFrame nuevo
-            df = pd.DataFrame(columns=['fecha', 'pregunta'])
-            sha = None
+        # Decodificar el contenido existente del archivo
+        existing_content = base64.b64decode(file_data["content"]).decode("utf-8")
+        existing_df = pd.read_csv(pd.compat.StringIO(existing_content))
 
-        # Agregar nueva pregunta
-        new_row = pd.DataFrame({
-            'fecha': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
-            'pregunta': [question]
-        })
-        df = pd.concat([df, new_row], ignore_index=True)
+        # Combinar el DataFrame existente con el nuevo DataFrame
+        updated_df = pd.concat([existing_df, df], ignore_index=True)
 
-        # Convertir DataFrame a CSV
-        csv_content = df.to_csv(index=False)
-        content_encoded = base64.b64encode(csv_content.encode("utf-8")).decode("utf-8")
+        # Convertir el DataFrame actualizado a CSV y codificarlo en Base64
+        updated_csv = updated_df.to_csv(index=False)
+        updated_content_encoded = base64.b64encode(updated_csv.encode("utf-8")).decode("utf-8")
 
-        # Preparar el commit
-        data = {
+        # Preparar datos para actualizar el archivo en GitHub
+        update_data = {
             "message": f"Actualización: Nueva pregunta agregada el {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            "content": content_encoded,
-            "sha": sha,
-            "branch": "main"
+            "content": updated_content_encoded,
+            "sha": file_data["sha"]
         }
 
-        # Hacer el commit
-        response = requests.put(url, headers=headers, data=json.dumps(data))
-        response.raise_for_status()
+        # Actualizar el archivo en GitHub
+        update_response = requests.put(url, headers=headers, data=json.dumps(update_data))
+        update_response.raise_for_status()
 
-        # Mostrar las últimas preguntas en el sidebar
-        st.sidebar.markdown("### Últimas preguntas registradas:")
-        st.sidebar.dataframe(df.tail(), use_container_width=True)
-
-        st.toast("✅ Pregunta agregada exitosamente en GitHub", icon='✍️')
+        st.success("✅ Pregunta agregada exitosamente en GitHub")
         return True
-
     except Exception as e:
         st.error(f"Error al guardar la pregunta en GitHub: {str(e)}")
         return False
@@ -145,7 +122,7 @@ def load_data():
         return df
     
     except Exception as e:
-        st.error(f"Error al procesar los datos: {str(e)}")
+        st.error(f"Error al cargar o procesar los datos: {str(e)}")
         return None
 
 def main():
@@ -220,6 +197,16 @@ def main():
             
             # El resto del código de análisis y generación de respuesta se mantiene igual
             ...
+
+            # Guardar la pregunta en GitHub
+            new_row = pd.DataFrame({
+                'fecha': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
+                'pregunta': [prompt]
+            })
+            if update_question_file_in_github(new_row):
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            else:
+                st.session_state.messages.append({"role": "assistant", "content": "Lo siento, hubo un problema al guardar tu pregunta. Por favor, inténtalo de nuevo más tarde."})
 
     except Exception as e:
         st.error(f"Error al cargar o procesar los datos: {str(e)}")
