@@ -30,7 +30,7 @@ Puedes hacer preguntas sobre:
 - Tendencias diarias y horarias
 - Estadísticas específicas
 Puedo generar algunos gráficos de interés y estoy aprendiendo a hacer más cosas.
-Algunas pregunta sugeridas, Qué tipos de equipo se detecto?, Cuándo hubo más vagonetas...puedes traerme un café?...ups perdón esa no
+Algunas preguntas sugeridas, Qué tipos de equipo se detecto?, Cuándo hubo más vagonetas...puedes traerme un café?...ups perdón esa no
 """)
 
 
