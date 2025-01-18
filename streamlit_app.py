@@ -37,8 +37,6 @@ uploaded_file = st.sidebar.file_uploader("Cargar archivo CSV", type=['csv'])
 
 
 
-
-
 def save_question_to_github(question):
     try:
         # Configuración
