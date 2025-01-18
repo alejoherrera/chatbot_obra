@@ -7,9 +7,6 @@ import os
 import base64
 import json
 import requests
-import streamlit as st
-import requests
-import base64
 
 # Configuración de la página
 st.set_page_config(
@@ -18,8 +15,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Función para guardar en GitHub
 
 # Título y descripción
 st.title("💬 Chat Proyecto Taras-La Lima")
@@ -32,59 +27,6 @@ Puedes hacer preguntas sobre:
 Puedo generar algunos gráficos de interés y estoy aprendiendo a hacer más cosas.
 Algunas preguntas sugeridas, Qué tipos de equipo se detecto?, Cuándo hubo más vagonetas...puedes traerme un café?...ups perdón esa no
 """)
-
-
-
-
-def save_question_to_github(question):
-    try:
-        # Configuración
-        github_token = st.secrets["github"]["token"]
-        repo_name = "alejoherrera/chatbot_obra"
-        file_path = "data/preguntas.csv"
-
-        headers = {
-            "Authorization": f"token {github_token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
-
-        # Obtener contenido actual del archivo desde GitHub
-        url = f"https://api.github.com/repos/{repo_name}/contents/{file_path}"
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        file_data = response.json()
-
-        # Decodificar el contenido existente del archivo
-        existing_content = base64.b64decode(file_data["content"]).decode("utf-8")
-        existing_df = pd.read_csv(io.StringIO(existing_content))
-
-        # Agregar la nueva pregunta
-        new_row = {
-            "fecha": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            "pregunta": question
-        }
-        updated_df = pd.concat([existing_df, pd.DataFrame([new_row])], ignore_index=True)
-
-        # Convertir el DataFrame actualizado a CSV y codificarlo en Base64
-        updated_csv = updated_df.to_csv(index=False)
-        updated_content_encoded = base64.b64encode(updated_csv.encode("utf-8")).decode("utf-8")
-
-        # Preparar datos para actualizar el archivo en GitHub
-        update_data = {
-            "message": f"Actualización: Nueva pregunta agregada el {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            "content": updated_content_encoded,
-            "sha": file_data["sha"]
-        }
-
-        # Actualizar el archivo en GitHub
-        update_response = requests.put(url, headers=headers, data=json.dumps(update_data))
-        update_response.raise_for_status()
-
-        st.toast("✅ Pregunta agregada exitosamente en GitHub", icon='✍️')
-        return True
-    except Exception as e:
-        st.error(f"Error al guardar la pregunta en GitHub: {str(e)}")
-        return False
 
 def extract_datetime(filename):
     try:
@@ -108,22 +50,12 @@ def extract_datetime(filename):
 
 # Función para cargar y procesar datos
 @st.cache_data
-def load_data(uploaded_file=None):
-    try:  
-            df = None
-            for path in possible_paths:
-                try:
-                    df = pd.read_csv(path, sep=';')
-                    st.success(f'Archivo cargado correctamente desde: {path}')
-                    break
-                except FileNotFoundError:
-                    continue
-            
-            if df is None:
-                raise FileNotFoundError(
-                    "No se pudo encontrar el archivo matriz_prototipo.csv. "
-                    "Por favor, sube el archivo manualmente usando el panel lateral."
-                )
+def load_data():
+    try:
+        # Ruta del archivo predefinido
+        file_path = "ruta_del_archivo/matriz_prototipo.csv"  # Cambia esto a la ruta correcta
+        df = pd.read_csv(file_path, sep=';')
+        st.success(f'Archivo cargado correctamente desde: {file_path}')
         
         # Procesar fechas y horas
         df['datetime'] = df['nombre_imagen'].apply(extract_datetime)
@@ -138,21 +70,20 @@ def load_data(uploaded_file=None):
         })
         
         return df
-    
+    except FileNotFoundError:
+        st.error("No se encontró el archivo predefinido. Por favor, verifica la ruta.")
+        return None
     except Exception as e:
         st.error(f"Error al procesar los datos: {str(e)}")
         return None
+
 def main():
-   
     try:
-        # Intentar cargar datos
-        if uploaded_file is not None:
-            df = load_data(uploaded_file)
-        else:
-            df = load_data()
-            
+        # Cargar datos predefinidos
+        df = load_data()
+        
         if df is None:
-            st.warning("Por favor, sube el archivo CSV usando el panel lateral para comenzar el análisis.")
+            st.error("No se pudieron cargar los datos. Por favor, revisa el archivo predefinido.")
             st.stop()
         
         # Calcular algunas estadísticas útiles
@@ -177,6 +108,7 @@ def main():
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
+        
         # Reaccionar a las preguntas del usuario
         if prompt := st.chat_input("Haz una pregunta sobre el proyecto"):
             # Agregar mensaje del usuario
@@ -267,21 +199,14 @@ def main():
                             labels={'x': 'Tipo de Objeto', 'y': 'Número de Detecciones'})
 
             else:
-                # Guardar la pregunta sin respuesta
-                save_question_to_github(prompt)
-                response = f"""Esa pregunta aun no la puedo responder, estoy en proceso de entrenamiento, voy a guardar tu pregunta en mis registros para que la tomen en cuenta.
+                response = f"""Esa pregunta aún no la puedo responder, pero sigo aprendiendo.
 
-Guardando la pregunta: "{prompt}"
-
-Puedo ayudarte con información sobre:
+¿Te gustaría saber algo sobre:
 - Promedios por imagen
-- Promedios diarios de detecciones
-- Máximos de detecciones por tipo
+- Promedios diarios
+- Máximos
 - Distribución de detecciones
-- Patrones horarios
-- Total de detecciones
-
-¿Te gustaría saber algo sobre estos temas?"""
+- Horarios?"""
 
             # Mostrar respuesta
             with st.chat_message("assistant"):
@@ -294,9 +219,6 @@ Puedo ayudarte con información sobre:
 
     except Exception as e:
         st.error(f"Error al cargar o procesar los datos: {str(e)}")
-        st.write("Por favor, asegúrate de que el archivo CSV esté en el formato correcto y contenga los datos necesarios.")
-        if st.button('Reintentar'):
-            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
