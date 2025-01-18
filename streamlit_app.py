@@ -17,6 +17,14 @@ st.set_page_config(
 )
 
 # Función para guardar en GitHub
+
+
+import streamlit as st
+import pandas as pd
+import base64
+import json
+import requests
+
 def save_question_to_github(question):
     try:
         # Configuración de GitHub
@@ -62,7 +70,7 @@ def save_question_to_github(question):
 
         # Preparar el commit
         data = {
-            "message": f"Nueva pregunta registrada: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "message": f"Actualización de archivo preguntas.csv",
             "content": content_encoded,
             "branch": "main"
         }
@@ -78,11 +86,11 @@ def save_question_to_github(question):
         st.sidebar.markdown("### Últimas preguntas registradas:")
         st.sidebar.dataframe(df.tail(), use_container_width=True)
 
-        st.toast("✅ Pregunta guardada en GitHub", icon='✍️')
+        st.toast("✅ Archivo actualizado en GitHub", icon='✍️')
         return True
 
     except Exception as e:
-        st.error(f"Error al guardar en GitHub: {str(e)}")
+        st.error(f"Error al actualizar el archivo en GitHub: {str(e)}")
         return False
     # Función para procesar el nombre del archivo y obtener la fecha y hora
 def extract_datetime(filename):
