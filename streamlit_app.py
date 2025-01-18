@@ -1,14 +1,18 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
+import numpy as np
+import os
 import base64
 import json
 import requests
-from datetime import datetime
-import pandas as pd
 
 def save_question_to_github(question):
     try:
         # Configuración de GitHub
         github_token = st.secrets["github"]["token"]
-        repo_name = "tu_usuario/tu_repositorio"
+        repo_name = "alejoherrera/chatbot_obra"
         file_path = "data/preguntas.csv"
         
         # Headers para la API de GitHub
@@ -31,8 +35,10 @@ def save_question_to_github(question):
             
             # Convertir el contenido a DataFrame
             df = pd.read_csv(pd.StringIO(content))
-        except:
+            st.success("Archivo de preguntas existente cargado correctamente")
+        except Exception as e:
             # Si el archivo no existe, crear un DataFrame nuevo
+            st.info("Creando nuevo archivo de preguntas")
             df = pd.DataFrame(columns=['fecha', 'pregunta'])
             sha = None
 
@@ -49,7 +55,7 @@ def save_question_to_github(question):
 
         # Preparar el commit
         data = {
-            "message": f"Add new question: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "message": f"Nueva pregunta registrada: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             "content": content_encoded,
             "branch": "main"
         }
@@ -61,9 +67,44 @@ def save_question_to_github(question):
         response = requests.put(url, headers=headers, data=json.dumps(data))
         response.raise_for_status()
 
-        st.toast("Pregunta guardada en GitHub", icon='✍️')
+        # Mostrar las últimas preguntas en el sidebar
+        st.sidebar.markdown("### Últimas preguntas registradas:")
+        st.sidebar.dataframe(df.tail(), use_container_width=True)
+
+        st.toast("✅ Pregunta guardada en GitHub", icon='✍️')
         return True
 
     except Exception as e:
         st.error(f"Error al guardar en GitHub: {str(e)}")
         return False
+
+# Configuración de la página
+st.set_page_config(
+    page_title="Proyecto Taras-La Lima Chat",
+    page_icon="🚧",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# El resto del código anterior se mantiene igual hasta llegar a la parte del manejo de preguntas...
+
+# Cuando llegas a la parte del else donde se manejan las preguntas sin respuesta, reemplazas con:
+
+            else:
+                # Guardar la pregunta sin respuesta
+                save_question_to_github(prompt)
+                response = f"""Esa pregunta aun no la puedo responder, estoy en proceso de entrenamiento, voy a guardar tu pregunta en mis registros para que la tomen en cuenta.
+
+Guardando la pregunta: "{prompt}"
+
+Puedo ayudarte con información sobre:
+- Promedios por imagen
+- Promedios diarios de detecciones
+- Máximos de detecciones por tipo
+- Distribución de detecciones
+- Patrones horarios
+- Total de detecciones
+
+¿Te gustaría saber algo sobre estos temas?"""
+
+# El resto del código se mantiene igual
