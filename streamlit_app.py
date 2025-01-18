@@ -19,67 +19,66 @@ st.set_page_config(
 # Función para guardar en GitHub
 
 
+
+
+import requests
+import base64
+import pandas as pd
+import io
+from datetime import datetime
+import json
+import streamlit as st
+
 def save_question_to_github(question):
     try:
-        # Configuración de GitHub
+        # Configuración
         github_token = st.secrets["github"]["token"]
         repo_name = "alejoherrera/chatbot_obra"
-        file_path = "data/"
-        
-        # Headers para la API de GitHub
+        file_path = "data/preguntas.csv"
+
         headers = {
             "Authorization": f"token {github_token}",
             "Accept": "application/vnd.github.v3+json"
         }
 
-        # URL de la API
+        # Obtener contenido actual del archivo desde GitHub
         url = f"https://api.github.com/repos/{repo_name}/contents/{file_path}"
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        file_data = response.json()
 
-        try:
-            # Intentar obtener el archivo existente más reciente
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            
-            # Obtener el último número de archivo
-            files = response.json()
-            latest_file = max([f for f in files if f["name"].startswith("preguntas_")], 
-                             key=lambda f: int(f["name"].split("_")[1]))
-            
-            # Extraer el número del último archivo
-            latest_num = int(latest_file["name"].split("_")[1])
-            new_filename = f"preguntas_{latest_num + 1}.csv"
-        except Exception as e:
-            # Si no hay archivos existentes, empezar desde 1
-            new_filename = "preguntas_1.csv"
+        # Decodificar el contenido existente del archivo
+        existing_content = base64.b64decode(file_data["content"]).decode("utf-8")
+        existing_df = pd.read_csv(io.StringIO(existing_content))
 
-        # Crear nuevo DataFrame con la pregunta
-        new_row = pd.DataFrame({
-            'fecha': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
-            'pregunta': [question]
-        })
-        
-        # Convertir DataFrame a CSV
-        csv_content = new_row.to_csv(index=False)
-        content_encoded = base64.b64encode(csv_content.encode("utf-8")).decode("utf-8")
+        # Agregar la nueva pregunta
+        new_row = {
+            "fecha": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "pregunta": question
+        }
+        updated_df = pd.concat([existing_df, pd.DataFrame([new_row])], ignore_index=True)
 
-        # Preparar el commit
-        data = {
-            "message": f"Nueva pregunta registrada: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            "content": content_encoded,
-            "branch": "main",
-            "name": new_filename
+        # Convertir el DataFrame actualizado a CSV y codificarlo en Base64
+        updated_csv = updated_df.to_csv(index=False)
+        updated_content_encoded = base64.b64encode(updated_csv.encode("utf-8")).decode("utf-8")
+
+        # Preparar datos para actualizar el archivo en GitHub
+        update_data = {
+            "message": f"Actualización: Nueva pregunta agregada el {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "content": updated_content_encoded,
+            "sha": file_data["sha"]
         }
 
-        # Hacer el commit
-        response = requests.put(url, headers=headers, data=json.dumps(data))
-        response.raise_for_status()
+        # Actualizar el archivo en GitHub
+        update_response = requests.put(url, headers=headers, data=json.dumps(update_data))
+        update_response.raise_for_status()
 
-        st.toast("✅ Pregunta guardada en GitHub", icon='✍️')
+        st.toast("✅ Pregunta agregada exitosamente en GitHub", icon='✍️')
         return True
-
     except Exception as e:
-        st.error(f"Error al guardar en GitHub: {str(e)}")
+        st.error(f"Error al guardar la pregunta en GitHub: {str(e)}")
         return False
+
 def extract_datetime(filename):
     try:
         # Formato esperado: YYYYMMDD-HHMMSS.jpg
