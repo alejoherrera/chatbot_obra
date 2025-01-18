@@ -24,6 +24,13 @@ import base64
 import json
 import requests
 
+import streamlit as st
+import pandas as pd
+import base64
+import json
+import requests
+from datetime import datetime
+
 def save_question_to_github(question):
     try:
         # Configuración de GitHub
@@ -41,57 +48,50 @@ def save_question_to_github(question):
         url = f"https://api.github.com/repos/{repo_name}/contents/{file_path}"
 
         try:
-            # Intentar obtener el archivo existente
+            # Intentar obtener el archivo existente más reciente
             response = requests.get(url, headers=headers)
             response.raise_for_status()
             
-            # Decodificar el contenido existente
-            content = base64.b64decode(response.json()["content"]).decode("utf-8")
-            sha = response.json()["sha"]
+            # Obtener el último número de archivo
+            files = response.json()
+            latest_file = max([f for f in files if f["name"].startswith("preguntas_")], 
+                             key=lambda f: int(f["name"].split("_")[1]))
             
-            # Convertir el contenido a DataFrame
-            df = pd.read_csv(pd.StringIO(content))
+            # Extraer el número del último archivo
+            latest_num = int(latest_file["name"].split("_")[1])
+            new_filename = f"preguntas_{latest_num + 1}.csv"
         except Exception as e:
-            # Si el archivo no existe, crear un DataFrame nuevo
-            df = pd.DataFrame(columns=['fecha', 'pregunta'])
-            sha = None
+            # Si no hay archivos existentes, empezar desde 1
+            new_filename = "preguntas_1.csv"
 
-        # Agregar nueva pregunta
+        # Crear nuevo DataFrame con la pregunta
         new_row = pd.DataFrame({
             'fecha': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
             'pregunta': [question]
         })
-        df = pd.concat([df, new_row], ignore_index=True)
-
+        
         # Convertir DataFrame a CSV
-        csv_content = df.to_csv(index=False)
+        csv_content = new_row.to_csv(index=False)
         content_encoded = base64.b64encode(csv_content.encode("utf-8")).decode("utf-8")
 
         # Preparar el commit
         data = {
-            "message": f"Actualización de archivo preguntas.csv",
+            "message": f"Nueva pregunta registrada: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             "content": content_encoded,
-            "branch": "main"
+            "branch": "main",
+            "name": new_filename
         }
-        
-        if sha:
-            data["sha"] = sha
 
         # Hacer el commit
         response = requests.put(url, headers=headers, data=json.dumps(data))
         response.raise_for_status()
 
-        # Mostrar las últimas preguntas en el sidebar
-        st.sidebar.markdown("### Últimas preguntas registradas:")
-        st.sidebar.dataframe(df.tail(), use_container_width=True)
-
-        st.toast("✅ Archivo actualizado en GitHub", icon='✍️')
+        st.toast("✅ Pregunta guardada en GitHub", icon='✍️')
         return True
 
     except Exception as e:
-        st.error(f"Error al actualizar el archivo en GitHub: {str(e)}")
+        st.error(f"Error al guardar en GitHub: {str(e)}")
         return False
-    # Función para procesar el nombre del archivo y obtener la fecha y hora
 def extract_datetime(filename):
     try:
         # Formato esperado: YYYYMMDD-HHMMSS.jpg
