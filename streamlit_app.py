@@ -10,6 +10,7 @@ import requests
 import streamlit as st
 import requests
 import base64
+import io 
 
 # Configuración de la página
 st.set_page_config(
