@@ -154,7 +154,9 @@ def load_data(uploaded_file=None):
         st.error(f"Error al procesar los datos: {str(e)}")
         return None
 def main():
-   
+    # Agregar opción de carga de archivo en el sidebar
+    st.sidebar.markdown("### Cargar Datos")
+    uploaded_file = st.sidebar.file_uploader("Cargar archivo CSV", type=['csv'])
     try:
         # Intentar cargar datos
         if uploaded_file is not None:
