@@ -201,7 +201,7 @@ def main():
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
-# Reaccionar a las preguntas del usuario
+        # Reaccionar a las preguntas del usuario
         if prompt := st.chat_input("Haz una pregunta sobre el proyecto"):
             # Agregar mensaje del usuario
             st.session_state.messages.append({"role": "user", "content": prompt})
