@@ -53,7 +53,7 @@ def extract_datetime(filename):
 def load_data():
     try:
         # Ruta del archivo predefinido
-        file_path = "ruta_del_archivo/matriz_prototipo.csv"  # Cambia esto a la ruta correcta
+        file_path = "https://github.com/alejoherrera/chatbot_obra/blob/main/data/matriz_prototipo.csv"  # Cambia esto a la ruta correcta
         df = pd.read_csv(file_path, sep=';')
         st.success(f'Archivo cargado correctamente desde: {file_path}')
         
