@@ -24,11 +24,12 @@ st.set_page_config(
 # Título y descripción
 st.title("💬 Chat Proyecto Taras-La Lima")
 st.markdown("""
-Este chat te permite analizar los datos de detección de objetos del proyecto Intersección vial Taras-La Lima.
+Este chat te permite analizar los datos de detección de objetos del proyecto Intersección vial Taras-La Lima, provincia de Cartago, Costa Rica.
 Puedes hacer preguntas sobre:
 - Detecciones de personas, tractores y aplanadoras
 - Tendencias diarias y horarias
 - Estadísticas específicas
+Puedo generar algunos gráficos de interés y estoy aprendiendo a hacer más cosas.
 """)
 
 # Agregar opción de carga de archivo en el sidebar
