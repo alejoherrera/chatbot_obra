@@ -31,9 +31,7 @@ Puedes hacer preguntas sobre:
 - Estadísticas específicas
 """)
 
-# Agregar opción de carga de archivo en el sidebar
-st.sidebar.markdown("### Cargar Datos")
-uploaded_file = st.sidebar.file_uploader("Cargar archivo CSV", type=['csv'])
+
 
 
 
