@@ -24,7 +24,7 @@ def save_question_to_github(question):
         # Configuración de GitHub
         github_token = st.secrets["github"]["token"]
         repo_name = "alejoherrera/chatbot_obra"
-        file_path = "data/preguntas.csv"
+        file_path = "data/"
         
         # Headers para la API de GitHub
         headers = {
