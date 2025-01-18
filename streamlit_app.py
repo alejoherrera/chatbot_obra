@@ -109,19 +109,7 @@ def extract_datetime(filename):
 # Función para cargar y procesar datos
 @st.cache_data
 def load_data(uploaded_file=None):
-    try:
-        if uploaded_file is not None:
-            df = pd.read_csv(uploaded_file, sep=';')
-            st.success('Archivo cargado correctamente desde la carga manual')
-        else:
-            # Intenta diferentes rutas posibles para el archivo
-            possible_paths = [
-                'matriz_prototipo.csv',
-                'data/matriz_prototipo.csv',
-                './matriz_prototipo.csv',
-                './data/matriz_prototipo.csv'
-            ]
-            
+    try:  
             df = None
             for path in possible_paths:
                 try:
