@@ -153,7 +153,7 @@ def load_data(uploaded_file=None):
     except Exception as e:
         st.error(f"Error al procesar los datos: {str(e)}")
         return None
-    def main():
+def main():
     # Título y descripción
     st.title("💬 Chat Proyecto Taras-La Lima")
     st.markdown("""
